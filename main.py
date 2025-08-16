@@ -1,51 +1,39 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from random import randint
+
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
+
+from models import Base, TasksModel, Task
 
 app = FastAPI()
-
-tasks = dict()
-
-def new_id() -> int:
-    n_id = randint(1, 1000)
-    while n_id in tasks.keys():
-        n_id = randint(1, 1000)
-    return n_id
-
-class Task(BaseModel):
-    title: str
-    description: str | None = None
-    completed: bool = False
+engine = create_engine("sqlite://", echo=True)
 
 @app.get("/tasks")
 async def print_tasks():
-    return tasks.items()
+    with Session(engine) as session:
+        return session.scalars(select(TasksModel)).all()
 
 @app.get("/tasks/{task_id}")
 async def get_task_by_id(task_id: int | None = None):
-    if task_id:
-        if task_id in tasks.keys():
-            return tasks[task_id]
-        else:
-            return "Задачи с таким ID не существует."
-    else:
-        return "Введите ID задачи."
+    with Session(engine) as session:
+        return session.scalars(select(TasksModel).where(TasksModel.id == task_id)).all()
 
 @app.post("/tasks")
 async def make_task(task: Task | None = None):
-    if task:
-        tasks.update({new_id(): task})
-        return f"Задача добавлена."
-    else:
-        return "Запрос не содержит: title, description (optional), completed (optional)."
+    with Session(engine) as session:
+        session.add(TasksModel(
+            title = task.title,
+            description = task.description,
+            completed = task.completed))
+        session.commit()
+    return f"Задача '{task.title}' создана."
 
 @app.delete("/tasks/{task_id}")
 async def delete_task(task_id: int | None = None):
-    if task_id:
-        if task_id in tasks.keys():
-            task = tasks.pop(task_id)
-            return f'Задача {task_id} удалена.'
-        else:
-            return "Задачи с таким ID не существует."
-    else:
-        return "Введите ID задачи."
+    pass
+
+@app.post("/setup")
+async def setup():
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    return "База Данных сброшена."
