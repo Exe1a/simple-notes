@@ -30,7 +30,10 @@ async def make_task(task: Task | None = None):
 
 @app.delete("/tasks/{task_id}")
 async def delete_task(task_id: int | None = None):
-    pass
+    with Session(engine) as session:
+        session.delete(session.get(TasksModel, task_id))
+        session.commit()
+    return f"Задача {task_id} удалена."
 
 @app.post("/setup")
 async def setup():
