@@ -18,7 +18,7 @@ async def print_tasks():
 @app.get("/tasks/{task_id}")
 async def get_task_by_id(task_id: int):
     with Session(engine) as session:
-        return session.scalars(select(TasksModel).where(TasksModel.id == task_id)).all()
+        return session.scalars(select(TasksModel).where(TasksModel.id == task_id)).one()
 
 # Add task
 @app.post("/tasks")
@@ -27,7 +27,7 @@ async def make_task(task: Task):
         session.add(TasksModel(
             title = task.title,
             description = task.description,
-            completed = task.completed))
+            status = task.status))
         session.commit()
     return f"Задача '{task.id}' с названием {task.title} создана."
 
@@ -54,7 +54,7 @@ async def update_task(
         if status != None:
             session.get(TasksModel, task_id).status = status
         session.commit()
-    return f"Статус задачи {task_id} изменен на {status}"
+        return session.scalars(select(TasksModel).where(TasksModel.id == task_id)).one()
 
 # Setup database
 @app.post("/setup")
