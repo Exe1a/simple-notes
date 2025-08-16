@@ -12,9 +12,9 @@ class TasksModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(30))
     description: Mapped[str] = mapped_column(String(300))
-    completed: Mapped[bool] = mapped_column(Boolean)
+    status: Mapped[bool] = mapped_column(Boolean)
 
 class Task(BaseModel):
     title: str
     description: str | None = None
-    completed: bool = False
+    status: bool = False

@@ -29,7 +29,7 @@ async def make_task(task: Task):
             description = task.description,
             completed = task.completed))
         session.commit()
-    return f"Задача '{task.title}' создана."
+    return f"Задача '{task.id}' с названием {task.title} создана."
 
 # Delete task by ID
 @app.delete("/tasks/{task_id}")
@@ -39,13 +39,20 @@ async def delete_task(task_id: int):
         session.commit()
     return f"Задача {task_id} удалена."
 
-# Update completed status
+# Update title, description, status by ID
 @app.patch("/tasks/{task_id}")
 async def update_task(
                     task_id: int,
-                    status: bool):
+                    title: str | None = None,
+                    description: str | None = None,
+                    status: bool | None = None):
     with Session(engine) as session:
-        session.get(TasksModel, task_id).completed = status
+        if title != None:
+            session.get(TasksModel, task_id).title = title
+        if description != None:
+            session.get(TasksModel, task_id).description = description
+        if status != None:
+            session.get(TasksModel, task_id).status = status
         session.commit()
     return f"Статус задачи {task_id} изменен на {status}"
 
